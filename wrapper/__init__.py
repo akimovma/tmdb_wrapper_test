@@ -26,4 +26,8 @@ requests_cache.install_cache(cache_name='tmdb_cache',
 session = requests.Session()
 session.params['api_key'] = TMDB_API_KEY
 
+registered = dict()
+
+from .decorators import searchable
+from .search import Finder
 from .tv import TV

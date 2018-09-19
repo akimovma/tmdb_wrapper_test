@@ -47,3 +47,14 @@ def test_tv_search(tv_keys):
     assert isinstance(response['results'], list)
     assert isinstance(response['results'][0], dict)
     assert set(tv_keys).issubset(response['results'][0].keys())
+
+
+@vcr.use_cassette('tests/vcr_cassettes/tv-search.yml')
+def test_tv_search_new(tv_keys):
+    from wrapper.search import Finder
+    finder = Finder('tv')
+    response = finder.search('The Big bang')
+    assert isinstance(response, dict)
+    assert isinstance(response['results'], list)
+    assert isinstance(response['results'][0], dict)
+    assert set(tv_keys).issubset(response['results'][0].keys())

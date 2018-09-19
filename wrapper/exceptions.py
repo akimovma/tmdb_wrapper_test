@@ -13,3 +13,6 @@ class InvalidInputTMDBError(BaseTMDBException):
 
 class InvalidPropertyTMDBError(BaseTMDBException):
     pass
+
+class NotAccessibleTMDBError(BaseTMDBException):
+    pass

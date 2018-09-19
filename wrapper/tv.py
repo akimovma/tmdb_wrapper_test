@@ -1,29 +1,28 @@
-import json
-from datetime import datetime
-
-import requests_cache
 from requests import HTTPError
 
-from . import session, ROOT_URL, TMDB_API_KEY
+from . import session, ROOT_URL, TMDB_API_KEY, searchable
 from .exceptions import InvalidInputTMDBError, InvalidPropertyTMDBError
+from .base import BaseInstance
 
 
-class TV:
+@searchable
+class TV(BaseInstance):
+    name = 'tv'
     URL_PATH = 'tv/'
 
     def __init__(self, show_id):
+        super().__init__()
         self.id = show_id
-        self.cache = requests_cache.get_cache()
         self._get_data_from_source()
 
     def _get_data_from_source(self, hard=False):
         """ Get data from TMDB to ssave it in cache
         If info was taken earlier, it takes that from the cache.
         """
-        path = self.__make_url(self.id)
+        path = self._make_url(self.id)
         if hard:
             # hard = clear cache
-            self.cache.delete_url(self.__make_url(self.id, _full=True))
+            self.cache.delete_url(self._make_url(self.id, _full=True))
         response = session.get(path)
         try:
             response.raise_for_status()
@@ -56,8 +55,8 @@ class TV:
         Update method will clear cache if we have that and load the data.
         :return bool. True if we have cached page, False if we don't have that
         """
-        full_url = self.__make_url(self.id, _full=True)
-        is_cached = requests_cache.get_cache().has_url(full_url)
+        full_url = self._make_url(self.id, _full=True)
+        is_cached = self.cache.has_url(full_url)
         if is_cached:
             self._get_data_from_source(hard=True)
             return True
@@ -65,20 +64,20 @@ class TV:
         return False
 
     @staticmethod
-    def __make_url(path, _full=False):
+    def _make_url(path, _full=False):
         if not _full:
             return f'{ROOT_URL}{TV.URL_PATH}{path}'
         return f'{ROOT_URL}{TV.URL_PATH}{path}?api_key={TMDB_API_KEY}'
 
     def info(self):
-        path = self.__make_url(self.id)
+        path = self._make_url(self.id)
         response = session.get(path)
         return response.json()
 
     @staticmethod
     def popular(count=0):
         # todo: return list[1..count] of TV instances
-        path = TV.__make_url('popular')
+        path = TV._make_url('popular')
         response = session.get(path)
         return response.json()
 
