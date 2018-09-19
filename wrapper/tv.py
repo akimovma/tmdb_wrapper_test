@@ -1,19 +1,26 @@
 from requests import HTTPError
+from urllib.parse import urljoin
 
-from . import session, ROOT_URL, TMDB_API_KEY, searchable
+from . import session, ROOT_URL, TMDB_API_KEY, searchable, factories
 from .exceptions import InvalidInputTMDBError, InvalidPropertyTMDBError
 from .base import BaseInstance
 
 
 @searchable
 class TV(BaseInstance):
-    name = 'tv'
+    instance_name = 'tv'
     URL_PATH = 'tv/'
 
     def __init__(self, show_id):
         super().__init__()
         self.id = show_id
         self._get_data_from_source()
+
+    def __str__(self):
+        return f"<TV show '{self.name}({self.first_air_date})'>"
+
+    def __repr__(self):
+        return f"<TV show '{self.name}({self.first_air_date})'>"
 
     def __getattr__(self, item):
         """
@@ -33,14 +40,20 @@ class TV(BaseInstance):
             )
 
     @classmethod
+    def create(cls, data):
+        show_id = data.get('id', None)
+        if show_id:
+            return cls(show_id)
+        raise InvalidInputTMDBError
+
+    @classmethod
     def search(cls, search_text, preferred_lang='en-US'):
         # TODO: Need to be removed to some Search class in future
-        #
         if not search_text:
             raise InvalidInputTMDBError('Search text must be not empty')
         # Todo: refactor and remove that creation of search URL
         path = '{}{}/{}'.format(ROOT_URL, 'search', 'tv')
-        # update paload wirh search query
+        # update payload with search query
         payload = session.params
         payload['query'] = search_text
         payload['language'] = preferred_lang
@@ -51,21 +64,27 @@ class TV(BaseInstance):
         except HTTPError as e:
             raise InvalidInputTMDBError(f'Something bad happened on TMDB side.'
                                         f' Details - {e}') from None
-        # todo: return list of TV instances
-        return response.json()
+        data = response.json()
+        return factories.ShowFactory.get_tv(data.get('results', None))
 
     @staticmethod
     def _make_url(path, _full=False):
+        if path and not isinstance(path, str):
+            path = str(path)
+        base_url = urljoin(ROOT_URL, TV.URL_PATH)
+        url = urljoin(base_url, path)
         if not _full:
-            return f'{ROOT_URL}{TV.URL_PATH}{path}'
-        return f'{ROOT_URL}{TV.URL_PATH}{path}?api_key={TMDB_API_KEY}'
+            return url
+        url = urljoin(base_url, f"{path}?api_key={TMDB_API_KEY}")
+        return url
 
     @staticmethod
-    def popular(count=0):
-        # todo: return list[1..count] of TV instances
+    def popular(count=5):
         path = TV._make_url('popular')
         response = session.get(path)
-        return response.json()
+        data = response.json()
+        results = data.get('results', None)
+        return factories.ShowFactory.get_tv(results, count)
 
     def _get_data_from_source(self, hard=False):
         """ Get data from TMDB to ssave it in cache

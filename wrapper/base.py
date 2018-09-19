@@ -12,6 +12,11 @@ class BaseInstance(metaclass=abc.ABCMeta):
 
     @classmethod
     @abc.abstractclassmethod
+    def create(cls, data):
+        return NotImplemented
+
+    @classmethod
+    @abc.abstractclassmethod
     def search(cls, search_text, preferred_lang):
         return NotImplemented
 

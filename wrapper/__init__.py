@@ -30,4 +30,5 @@ registered = dict()
 
 from .decorators import searchable
 from .search import Finder
+from . import factories
 from .tv import TV
