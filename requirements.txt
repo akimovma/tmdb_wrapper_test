@@ -11,7 +11,7 @@ pytest==3.7.4
 PyYAML==3.13
 requests==2.19.1
 six==1.11.0
-urllib3==1.23
+urllib3==1.26.5
 vcrpy==1.13.0
 wrapt==1.10.11
 yarl==1.2.6
